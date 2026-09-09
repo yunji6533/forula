@@ -6,3 +6,4 @@ __pycache__/
 *.py[cod]
 *.safetensors
 checkpoint-*/
+pdf_test/stage1-live-result.json

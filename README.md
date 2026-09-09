@@ -87,3 +87,11 @@ python stage1_console.py --demo
 ```
 
 결과는 `pdf_test/stage1-live-result.json`에 저장됩니다.
+
+여러 표현을 반복 평가하려면 `pdf_test/stage1-test-cases.jsonl`에 답변과 기대값을 추가하고 다음 파일을 실행합니다.
+
+```powershell
+python stage1_batch_test.py
+```
+
+문항별 정확도와 케이스 완전 일치율은 `pdf_test/stage1-batch-report.json`에 저장됩니다.

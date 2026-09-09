@@ -36,6 +36,20 @@ DEMO_ANSWERS = [
 ]
 
 
+def json_object(text: str) -> dict:
+    decoder = json.JSONDecoder()
+    for index, character in enumerate(text):
+        if character != "{":
+            continue
+        try:
+            value, _ = decoder.raw_decode(text[index:])
+        except json.JSONDecodeError:
+            continue
+        if isinstance(value, dict):
+            return value
+    raise ValueError(f"모델이 유효한 JSON 객체를 반환하지 않았습니다: {text}")
+
+
 def ask_answers(demo: bool) -> list[str]:
     prompts = [
         "주변을 둘러보세요. 어떤 일이 일어날 것 같은가요?",
@@ -77,7 +91,7 @@ def build_record(answers: list[str]) -> dict:
     }
 
 
-def run_model(record: dict, adapter: Path) -> tuple[dict, float]:
+def load_model(adapter: Path) -> tuple:
     import logging
 
     logging.getLogger("torch.utils.flop_counter").setLevel(logging.ERROR)
@@ -87,15 +101,10 @@ def run_model(record: dict, adapter: Path) -> tuple[dict, float]:
 
     if not (adapter / "adapter_model.safetensors").is_file():
         raise FileNotFoundError(f"어댑터를 찾을 수 없습니다: {adapter}")
-    model_input = {key: record[key] for key in ("record_id", "survey_id", "survey_version", "phobia_type", "stage", "responses")}
-    messages = [
-        {"role": "system", "content": SYSTEM},
-        {"role": "user", "content": json.dumps(model_input, ensure_ascii=False, separators=(",", ":"))},
-    ]
     tokenizer = AutoTokenizer.from_pretrained(adapter, local_files_only=True)
     if torch.cuda.is_available():
         quantization = BitsAndBytesConfig(
-            load_in_4bit=True
+            load_in_4bit=True,
             bnb_4bit_quant_type="nf4",
             bnb_4bit_compute_dtype=torch.bfloat16,
             bnb_4bit_use_double_quant=True,
@@ -110,16 +119,36 @@ def run_model(record: dict, adapter: Path) -> tuple[dict, float]:
         )
         print("CUDA를 사용할 수 없어 CPU로 실행합니다.")
     model = PeftModel.from_pretrained(model, adapter)
-    inputs = tokenizer.apply_chat_template(messages, add_generation_prompt=True, tokenize=True, return_dict=True, return_tensors="pt")
-    inputs = {key: value.to(model.device) for key, value in inputs.items()}
+    return tokenizer, model, torch
+
+
+def run_model(record: dict, adapter: Path, runtime: tuple | None = None) -> tuple[dict, float]:
+    tokenizer, model, torch = runtime or load_model(adapter)
+    model_input = {key: record[key] for key in ("record_id", "survey_id", "survey_version", "phobia_type", "stage", "responses")}
+    messages = [
+        {"role": "system", "content": SYSTEM},
+        {"role": "user", "content": json.dumps(model_input, ensure_ascii=False, separators=(",", ":"))},
+    ]
+
+    def generate(current_messages: list[dict]) -> str:
+        inputs = tokenizer.apply_chat_template(current_messages, add_generation_prompt=True, tokenize=True, return_dict=True, return_tensors="pt")
+        inputs = {key: value.to(model.device) for key, value in inputs.items()}
+        with torch.inference_mode():
+            output = model.generate(**inputs, max_new_tokens=192, do_sample=False)
+        return tokenizer.decode(output[0, inputs["input_ids"].shape[-1]:], skip_special_tokens=True).strip()
+
     started = time.perf_counter()
-    with torch.inference_mode():
-        output = model.generate(**inputs, max_new_tokens=192, do_sample=False)
-    text = tokenizer.decode(output[0, inputs["input_ids"].shape[-1]:], skip_special_tokens=True).strip()
-    start, end = text.find("{"), text.rfind("}")
-    if start < 0 or end < start:
-        raise ValueError(f"모델이 JSON을 반환하지 않았습니다: {text}")
-    return json.loads(text[start:end + 1]), time.perf_counter() - started
+    text = generate(messages)
+    try:
+        match = json_object(text)
+    except ValueError:
+        print("모델 JSON 형식을 한 번 보정합니다...")
+        repair_messages = messages + [
+            {"role": "assistant", "content": text},
+            {"role": "user", "content": "선택 결과는 바꾸지 말고 JSON 문법만 수정하세요. 설명 없이 유효한 JSON 객체 하나만 출력하세요."},
+        ]
+        match = json_object(generate(repair_messages))
+    return match, time.perf_counter() - started
 
 
 def selected_labels(record: dict, match: dict) -> list[dict]:

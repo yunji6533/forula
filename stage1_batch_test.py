@@ -31,19 +31,25 @@ def main() -> None:
     runtime = load_model(args.adapter)
     details = []
     correct_questions = exact_cases = 0
+    error_cases = 0
     total_seconds = 0.0
     for index, case in enumerate(cases, 1):
         record = build_record(case["answers"])
         record["record_id"] = f"stage1-batch-{case['case_id']}"
-        match, seconds = run_model(record, args.adapter, runtime)
-        actual = {str(item["question_id"]): item["value"] for item in match["answers"]}
+        try:
+            match, seconds = run_model(record, args.adapter, runtime)
+            actual = {str(item["question_id"]): item["value"] for item in match["answers"]}
+            error = None
+        except Exception as exc:
+            seconds, actual, error = 0.0, {}, str(exc)
+            error_cases += 1
         checks = {qid: normalized(actual.get(qid)) == normalized(expected) for qid, expected in case["expected"].items()}
         correct_questions += sum(checks.values())
         exact = all(checks.values())
         exact_cases += exact
         total_seconds += seconds
-        details.append({"case_id": case["case_id"], "answers": case["answers"], "expected": case["expected"], "actual": actual, "correct": checks, "exact": exact, "seconds": round(seconds, 2)})
-        print(f"[{index}/{len(cases)}] {case['case_id']}: {'PASS' if exact else 'FAIL'}")
+        details.append({"case_id": case["case_id"], "answers": case["answers"], "expected": case["expected"], "actual": actual, "correct": checks, "exact": exact, "error": error, "seconds": round(seconds, 2)})
+        print(f"[{index}/{len(cases)}] {case['case_id']}: {'PASS' if exact else 'FAIL'}", flush=True)
 
     total_questions = sum(len(case["expected"]) for case in cases)
     report = {
@@ -54,6 +60,7 @@ def main() -> None:
             "total_questions": total_questions,
             "correct_questions": correct_questions,
             "question_accuracy": round(correct_questions / total_questions * 100, 2),
+            "error_cases": error_cases,
             "total_inference_seconds": round(total_seconds, 2),
         },
         "details": details,

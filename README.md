@@ -88,7 +88,7 @@ python stage1_console.py --demo
 
 결과는 `pdf_test/stage1-live-result.json`에 저장됩니다.
 
-여러 표현을 반복 평가하려면 `pdf_test/stage1-test-cases.jsonl`에 답변과 기대값을 추가하고 다음 파일을 실행합니다.
+여러 표현을 반복 평가하려면 `pdf_test/stage1-test-cases.jsonl`에 답변과 기대값을 추가하고 다음 파일을 실행합니다. 기본 테스트셋은 34개 Stage 세트, 총 102개 사용자 답변으로 구성됩니다.
 
 ```powershell
 python stage1_batch_test.py

@@ -80,7 +80,7 @@ def build_record(answers: list[str]) -> dict:
 def run_model(record: dict, adapter: Path) -> tuple[dict, float]:
     import torch
     from peft import PeftModel
-    from transformers import AutoModelForCausalLM, AutoTokenizer
+    from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
 
     if not (adapter / "adapter_model.safetensors").is_file():
         raise FileNotFoundError(f"어댑터를 찾을 수 없습니다: {adapter}")
@@ -90,9 +90,25 @@ def run_model(record: dict, adapter: Path) -> tuple[dict, float]:
         {"role": "user", "content": json.dumps(model_input, ensure_ascii=False, separators=(",", ":"))},
     ]
     tokenizer = AutoTokenizer.from_pretrained(adapter, local_files_only=True)
-    model = AutoModelForCausalLM.from_pretrained(BASE_MODEL, dtype=torch.bfloat16, device_map={"": "cpu"}, local_files_only=True)
+    if torch.cuda.is_available():
+        quantization = BitsAndBytesConfig(
+            load_in_4bit=True,
+            bnb_4bit_quant_type="nf4",
+            bnb_4bit_compute_dtype=torch.bfloat16,
+            bnb_4bit_use_double_quant=True,
+        )
+        model = AutoModelForCausalLM.from_pretrained(
+            BASE_MODEL, quantization_config=quantization, device_map="auto", local_files_only=True,
+        )
+        print(f"GPU 4-bit 실행: {torch.cuda.get_device_name(0)}")
+    else:
+        model = AutoModelForCausalLM.from_pretrained(
+            BASE_MODEL, dtype=torch.bfloat16, device_map={"": "cpu"}, local_files_only=True,
+        )
+        print("CUDA를 사용할 수 없어 CPU로 실행합니다.")
     model = PeftModel.from_pretrained(model, adapter)
     inputs = tokenizer.apply_chat_template(messages, add_generation_prompt=True, tokenize=True, return_dict=True, return_tensors="pt")
+    inputs = {key: value.to(model.device) for key, value in inputs.items()}
     started = time.perf_counter()
     with torch.inference_mode():
         output = model.generate(**inputs, max_new_tokens=192, do_sample=False)

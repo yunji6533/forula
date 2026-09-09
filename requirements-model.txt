@@ -1,5 +1,7 @@
-torch==2.11.0
+--extra-index-url https://download.pytorch.org/whl/cu128
+torch==2.11.0+cu128
 transformers==5.16.1
 peft==0.20.0
 accelerate==1.14.0
 safetensors==0.8.0
+bitsandbytes==0.50.2

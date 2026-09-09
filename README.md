@@ -77,7 +77,7 @@ python src/parser.py data/survey-responses.jsonl model-matches.jsonl data/ontolo
 
 ## Stage 1 직접 입력 테스트
 
-PyCharm에서 `stage1_console.py`를 실행하면 Stage 1 질문에 텍스트로 답하고 AI가 선택한 보기와 최종 Ontology 키·값을 확인할 수 있습니다. 현재 로컬 환경에서는 모델 크기 때문에 CPU로 실행되어 한 회 약 2분이 걸립니다.
+PyCharm에서 `stage1_console.py`를 실행하면 Stage 1 질문에 텍스트로 답하고 AI가 선택한 보기와 최종 Ontology 키·값을 확인할 수 있습니다. CUDA가 있으면 GPU 4-bit로 실행하고, 없으면 CPU로 실행합니다.
 
 기본 어댑터 위치는 `Downloads/job_d9d5ac53-adapter/adapter`입니다. PyCharm 프로젝트 인터프리터는 Formula의 `.venv`를 사용합니다.
 

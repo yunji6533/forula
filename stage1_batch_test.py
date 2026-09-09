@@ -5,7 +5,7 @@ import argparse
 import json
 from pathlib import Path
 
-from stage1_console import DEFAULT_ADAPTER, ROOT, build_record, load_model, run_model
+from stage1_console import DEFAULT_ADAPTER, PROMPT_VERSION, ROOT, build_record, load_model, run_model
 
 DEFAULT_CASES = ROOT / "pdf_test" / "stage1-test-cases.jsonl"
 DEFAULT_REPORT = ROOT / "pdf_test" / "stage1-batch-report.json"
@@ -54,6 +54,7 @@ def main() -> None:
     total_questions = sum(len(case["expected"]) for case in cases)
     report = {
         "summary": {
+            "prompt_version": PROMPT_VERSION,
             "total_cases": len(cases),
             "exact_cases": exact_cases,
             "case_exact_match_rate": round(exact_cases / len(cases) * 100, 2),

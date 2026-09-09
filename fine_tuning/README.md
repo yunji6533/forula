@@ -5,6 +5,8 @@
 - `semantic-matcher-sft.jsonl`: messages 형식 학습 데이터 1,600건
 - `semantic-matcher-holdout.jsonl`: 학습에 넣지 않는 검증 데이터 150건
 
+강화된 시스템 프롬프트가 잘리지 않도록 학습의 최대 토큰 길이는 `2048`로 설정합니다.
+
 학습 목표는 자유로운 STT 전사문을 현재 제공된 `option_id` 또는 척도값에 매칭하는 것입니다. 모델은 진단이나 Ontology 점수를 계산하지 않고 `record_id`, `question_id`, `value`만 출력합니다.
 
 기존 1·2차 모델은 이미 선택된 ID를 JSON으로 재구성하는 학습이었으므로 새 의미 매칭 정확도의 근거로 사용하지 않습니다.

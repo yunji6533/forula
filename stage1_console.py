@@ -12,7 +12,7 @@ ROOT = Path(__file__).resolve().parent
 sys.path.insert(0, str(ROOT / "src"))
 sys.path.insert(0, str(ROOT / "fine_tuning"))
 from parser import parse_record
-from build_semantic_matcher_dataset import SYSTEM
+from build_semantic_matcher_dataset import PROMPT_VERSION, SYSTEM
 
 BASE_MODEL = "google/gemma-4-E4B-it"
 DEFAULT_ADAPTER = Path.home() / "Downloads" / "job_d9d5ac53-adapter" / "adapter"
@@ -175,7 +175,7 @@ def main() -> None:
     print("\n모델을 불러와 답변을 매칭하고 있습니다...")
     match, seconds = run_model(record, args.adapter)
     ontology = parse_record(record, match)
-    result = {"source": record, "ai_match": match, "resolved_answers": selected_labels(record, match), "ontology_input": ontology, "inference_seconds": round(seconds, 2)}
+    result = {"prompt_version": PROMPT_VERSION, "source": record, "ai_match": match, "resolved_answers": selected_labels(record, match), "ontology_input": ontology, "inference_seconds": round(seconds, 2)}
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(result, ensure_ascii=False, indent=2), encoding="utf-8")
     print("\n[AI 보기 매칭 결과]")

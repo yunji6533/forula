@@ -57,7 +57,7 @@ Python Parser는 질문 누락·중복, 존재하지 않는 `option_id`, 척도 
 - `src/parser.py`: AI 매칭 결과를 검증하고 Ontology 키·값으로 변환
 - `schemas/survey-stage.schema.json`: STT 원본 Stage JSONL 규격
 - `schemas/ontology-input.schema.json`: Ontology 입력 JSONL 규격
-- `fine_tuning/build_semantic_matcher_dataset.py`: 폐쇄공포증 PDF 보기 기반 학습/검증 데이터 생성
+- `fine_tuning/build_semantic_matcher_dataset.py`: 폐쇄공포증 PDF 보기와 오류 유형을 반영한 학습/검증 데이터 생성
 - `pdf_test/`: PDF의 9개 Stage 구조를 반영한 테스트 fixture
 
 ## 실행

@@ -2,7 +2,7 @@
 
 `build_semantic_matcher_dataset.py`는 폐쇄공포증 PDF의 실제 보기와 1~10 척도를 기준으로 다음 파일을 생성합니다.
 
-- `semantic-matcher-sft.jsonl`: messages 형식 학습 데이터 1,200건
+- `semantic-matcher-sft.jsonl`: messages 형식 학습 데이터 1,600건
 - `semantic-matcher-holdout.jsonl`: 학습에 넣지 않는 검증 데이터 150건
 
 학습 목표는 자유로운 STT 전사문을 현재 제공된 `option_id` 또는 척도값에 매칭하는 것입니다. 모델은 진단이나 Ontology 점수를 계산하지 않고 `record_id`, `question_id`, `value`만 출력합니다.

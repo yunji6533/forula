@@ -78,6 +78,9 @@ def build_record(answers: list[str]) -> dict:
 
 
 def run_model(record: dict, adapter: Path) -> tuple[dict, float]:
+    import logging
+
+    logging.getLogger("torch.utils.flop_counter").setLevel(logging.ERROR)
     import torch
     from peft import PeftModel
     from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
@@ -92,7 +95,7 @@ def run_model(record: dict, adapter: Path) -> tuple[dict, float]:
     tokenizer = AutoTokenizer.from_pretrained(adapter, local_files_only=True)
     if torch.cuda.is_available():
         quantization = BitsAndBytesConfig(
-            load_in_4bit=True,
+            load_in_4bit=True
             bnb_4bit_quant_type="nf4",
             bnb_4bit_compute_dtype=torch.bfloat16,
             bnb_4bit_use_double_quant=True,

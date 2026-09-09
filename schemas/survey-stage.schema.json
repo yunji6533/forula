@@ -1,0 +1,57 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "VR Speech Survey Stage Record",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["record_id", "session_id", "survey_id", "survey_version", "phobia_type", "stage", "scenario", "responses", "created_at"],
+  "properties": {
+    "record_id": {"type": "string", "minLength": 1},
+    "session_id": {"type": "string", "minLength": 1},
+    "participant_id": {"type": "string", "minLength": 1},
+    "survey_id": {"type": "string", "pattern": "^[a-z][a-z0-9_-]*$"},
+    "survey_version": {"type": "string", "minLength": 1},
+    "phobia_type": {"type": "string", "pattern": "^[a-z][a-z0-9_]*$"},
+    "stage": {"type": "integer", "minimum": 1, "maximum": 99},
+    "scenario": {"type": "string", "minLength": 1},
+    "responses": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/response"}},
+    "stay_time_seconds": {"type": "number", "minimum": 0},
+    "created_at": {"type": "string", "format": "date-time"},
+    "metadata": {"type": "object"}
+  },
+  "$defs": {
+    "option": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["option_id", "label"],
+      "properties": {
+        "option_id": {"type": "integer", "minimum": 1},
+        "label": {"type": "string", "minLength": 1}
+      }
+    },
+    "response": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["question_id", "phase", "type", "question", "transcript"],
+      "properties": {
+        "question_id": {"type": "string", "minLength": 1},
+        "phase": {"enum": ["PRE", "POST"]},
+        "type": {"enum": ["SCALE", "SINGLE_CHOICE", "MULTI_SELECT", "CONFIRMATION"]},
+        "question": {"type": "string", "minLength": 1},
+        "transcript": {"type": "string", "minLength": 1},
+        "options": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/option"}},
+        "scale": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["min", "max"],
+          "properties": {"min": {"type": "number"}, "max": {"type": "number"}}
+        },
+        "screen_id": {"type": "integer", "minimum": 1},
+        "response_time_ms": {"type": "integer", "minimum": 0}
+      },
+      "allOf": [
+        {"if": {"properties": {"type": {"const": "SCALE"}}}, "then": {"required": ["scale"], "not": {"required": ["options"]}}},
+        {"if": {"properties": {"type": {"enum": ["SINGLE_CHOICE", "MULTI_SELECT", "CONFIRMATION"]}}}, "then": {"required": ["options"], "not": {"required": ["scale"]}}}
+      ]
+    }
+  }
+}

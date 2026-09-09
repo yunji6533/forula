@@ -1,0 +1,8 @@
+.idea/
+.venv/
+.python/
+.uv-cache/
+__pycache__/
+*.py[cod]
+*.safetensors
+checkpoint-*/

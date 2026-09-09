@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Ontology Key-Value Input",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["ontology_schema_version", "parser_version", "context", "values"],
+  "properties": {
+    "ontology_schema_version": {"const": "0.3.0"},
+    "parser_version": {"type": "string"},
+    "context": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source_record_id", "session_id", "survey_id", "survey_version", "phobia_type", "stage"],
+      "properties": {
+        "source_record_id": {"type": "string", "minLength": 1},
+        "session_id": {"type": "string", "minLength": 1},
+        "survey_id": {"type": "string", "minLength": 1},
+        "survey_version": {"type": "string", "minLength": 1},
+        "phobia_type": {"type": "string", "pattern": "^[a-z][a-z0-9_]*$"},
+        "stage": {"type": "integer", "minimum": 1}
+      }
+    },
+    "values": {
+      "type": "object",
+      "minProperties": 1,
+      "propertyNames": {
+        "anyOf": [
+          {"pattern": "^(PRE|POST)\\.Q.+\\.(SCALE|SINGLE_CHOICE|MULTI_SELECT|CONFIRMATION)$"},
+          {"const": "STAGE.STAY_TIME_SECONDS"}
+        ]
+      },
+      "additionalProperties": {
+        "oneOf": [
+          {"type": "number"},
+          {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "integer", "minimum": 1}}
+        ]
+      }
+    }
+  }
+}
